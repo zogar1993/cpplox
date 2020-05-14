@@ -8,16 +8,16 @@ InterpretResult VM::run() {
 
 #define READ_BYTE() (*ip++)
 #define READ_CONSTANT() (chunk->getConstant(READ_BYTE()))
-
-#define BINARY_OP(valueType, op)                           \
-    do {                                                   \                                                       
-        if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) {  \
-            runtimeError("Operands must be numbers.");     \
-            return INTERPRET_RUNTIME_ERROR;                \
-        };                                                  \
-        double b = AS_NUMBER(pop());                       \
-        double a = AS_NUMBER(pop());                       \
-        push(valueType(a op b));                           \
+#define BINARY_OP(valueType, op) \
+    do { \
+        if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
+            runtimeError("Operands must be numbers."); \
+            return INTERPRET_RUNTIME_ERROR; \
+        } \
+        double b = AS_NUMBER(pop()); \
+        double a = AS_NUMBER(pop()); \
+        double result = b op a; \
+        push(valueType(result)); \
     } while (false)
 
 
@@ -88,8 +88,8 @@ void VM::runtimeError(const char* format, ...) {
     va_end(args);
     fputs("\n", stderr);
 
-    size_t instruction = ip - chunk->code - 1;
-    int line = chunk->lines[instruction];
+    size_t instruction = ip - chunk->getCode() - 1;
+    int line = chunk->getLine(instruction);
     fprintf(stderr, "[line %d] in script\n", line);
 
     resetStack();

@@ -3,8 +3,6 @@
 #include "debug.h" 
 #include "vm.h"
 
-static VM vm;
-
 static void repl() {
     char line[1024];
     for (;;) {
@@ -15,7 +13,7 @@ static void repl() {
             break;
         }
 
-        vm.interpret(line);
+        vm()->interpret(line);
     }
 }
 static char* readFile(const char* path) {
@@ -50,7 +48,7 @@ static char* readFile(const char* path) {
 }
 static void runFile(const char* path) {
     char* source = readFile(path);
-    InterpretResult result = vm.interpret(source);
+    InterpretResult result = vm()->interpret(source);
     free(source);
 
     if (result == INTERPRET_COMPILE_ERROR) exit(65);
@@ -69,7 +67,7 @@ int main(int argc, char* argv[])
         exit(64);
     }
 
-    vm.free();
+    vm()->free();
 
     return 0;
 }

@@ -8,15 +8,6 @@ static int simpleInstruction(const char* name, int offset) {
     return offset + 1;
 }
 
-void printValue(const Value value)
-{
-    switch (value.type) {
-        case VAL_BOOL:   printf(AS_BOOL(value) ? "true" : "false"); break;
-        case VAL_NIL:    printf("nil"); break;
-        case VAL_NUMBER: printf("%g", AS_NUMBER(value)); break;
-    }
-}
-
 static int constantInstruction(const char* name, const Chunk* chunk, int offset) {
     uint8_t constant_index = chunk->getCode(offset + 1);
     printf("%-16s %4d '", name, constant_index);

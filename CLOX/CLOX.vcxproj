@@ -153,6 +153,7 @@
     <ClCompile Include="Compiler.cpp" />
     <ClCompile Include="Debug.cpp" />
     <ClCompile Include="Memory.cpp" />
+    <ClCompile Include="Object.cpp" />
     <ClCompile Include="Scanner.cpp" />
     <ClCompile Include="Value.cpp" />
     <ClCompile Include="VM.cpp" />
@@ -163,6 +164,7 @@
     <ClInclude Include="Compiler.h" />
     <ClInclude Include="Debug.h" />
     <ClInclude Include="Memory.h" />
+    <ClInclude Include="Object.h" />
     <ClInclude Include="Scanner.h" />
     <ClInclude Include="Value.h" />
     <ClInclude Include="VM.h" />

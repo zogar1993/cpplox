@@ -24,6 +24,8 @@ public:
 	Value pop();
 	Value peek(int distance);
 	bool isFalsey(Value value);
+	void concatenate();
+	Obj* objects;
 private:
 	const Chunk* chunk;
 	uint8_t* ip;
@@ -34,3 +36,5 @@ private:
 	Value* stackTop;
 	Compiler compiler = Compiler();
 };
+
+VM* vm();

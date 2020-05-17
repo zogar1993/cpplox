@@ -3,6 +3,9 @@
 #include "debug.h"
 #include "compiler.h"
 #include <stdarg.h>
+#include <string.h>
+#include "object.h"
+#include "memory.h"
 
 InterpretResult VM::run() {
 
@@ -16,8 +19,7 @@ InterpretResult VM::run() {
         } \
         double b = AS_NUMBER(pop()); \
         double a = AS_NUMBER(pop()); \
-        double result = b op a; \
-        push(valueType(result)); \
+        push(valueType(b op a)); \
     } while (false)
 
 
@@ -30,7 +32,11 @@ InterpretResult VM::run() {
             printf(" ]");
         }
         printf("\n");
-        disassembleInstruction(chunk, (int)(ip - chunk->getCode()));//TODO entender bien como funciona. Since disassembleInstruction() takes an integer byte offset and we store the current instruction reference as a direct pointer, we first do a little pointer math to convert ip back to a relative offset from the beginning of the bytecode. Then we disassemble the instruction that begins at that byte.
+        disassembleInstruction(chunk, (int)(ip - chunk->getCode()));
+        //TODO entender bien como funciona. Since disassembleInstruction()
+        //takes an integer byte offset and we store the current instruction reference as a direct pointer,
+        //we first do a little pointer math to convert ip back to a relative offset from the beginning of the bytecode.
+        //Then we disassemble the instruction that begins at that byte.
 #endif 
         uint8_t instruction;
         switch (instruction = READ_BYTE()) {
@@ -50,7 +56,21 @@ InterpretResult VM::run() {
             }
             case OP_GREATER:  BINARY_OP(BOOL_VAL, > ); break;
             case OP_LESS:     BINARY_OP(BOOL_VAL, < ); break;
-            case OP_ADD:      BINARY_OP(NUMBER_VAL, +); break;
+            case OP_ADD: {
+                if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
+                    concatenate();
+                }
+                else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))) {
+                    double b = AS_NUMBER(pop());
+                    double a = AS_NUMBER(pop());
+                    push(NUMBER_VAL(a + b));
+                }
+                else {
+                    runtimeError("Operands must be two numbers or two strings.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
             case OP_SUBTRACT: BINARY_OP(NUMBER_VAL, -); break;
             case OP_MULTIPLY: BINARY_OP(NUMBER_VAL, *); break;
             case OP_DIVIDE:   BINARY_OP(NUMBER_VAL, / ); break;
@@ -103,10 +123,12 @@ VM::VM()
 void VM::init()
 {
     resetStack();
+    objects = NULL;
 }
 
 void VM::free()
 {
+    freeObjects();
 }
 
 InterpretResult VM::interpret(const char* source)
@@ -145,4 +167,25 @@ Value VM::peek(int distance) {
 
 bool VM::isFalsey(Value value) {
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+}
+
+void VM::concatenate() {
+    ObjString* b = AS_STRING(pop());
+    ObjString* a = AS_STRING(pop());
+
+    int length = a->length + b->length;
+    char* chars = ALLOCATE(char, length + 1);
+    memcpy(chars, a->chars, a->length);
+    memcpy(chars + a->length, b->chars, b->length);
+    chars[length] = '\0';
+
+    ObjString* result = takeString(chars, length);
+    push(OBJ_VAL(result));
+}
+
+static VM _vm = VM();
+
+VM* vm()
+{
+    return &_vm;
 }

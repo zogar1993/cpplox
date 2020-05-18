@@ -117,17 +117,13 @@ void VM::runtimeError(const char* format, ...) {
 
 VM::VM()
 {
-    init();
-}
-
-void VM::init()
-{
     resetStack();
     objects = NULL;
 }
 
 void VM::free()
 {
+    strings.free();
     freeObjects();
 }
 

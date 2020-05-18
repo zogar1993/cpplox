@@ -4,6 +4,7 @@
 #include "chunk.h"
 #include "value.h"
 #include "compiler.h"
+#include "table.h"
 
 #define STACK_MAX 256
 
@@ -17,7 +18,6 @@ class VM
 {
 public:
 	VM();
-	void init();
 	void free();
 	InterpretResult interpret(const char* chunk);
 	void push(Value value);
@@ -26,6 +26,7 @@ public:
 	bool isFalsey(Value value);
 	void concatenate();
 	Obj* objects;
+	Table strings = Table();
 private:
 	const Chunk* chunk;
 	uint8_t* ip;

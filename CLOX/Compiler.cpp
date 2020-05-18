@@ -7,8 +7,10 @@ bool Compiler::compile(const char* source, Chunk* chunk)
     Compiler::scanner = Scanner(source);
     compilingChunk = chunk;
     advance();
-    expression();
-    consume(TOKEN_EOF, "Expect end of expression.");
+
+    while (!match(TOKEN_EOF))
+        declaration();    
+
     endCompiler();
     return !parser.hadError;
 }
@@ -195,4 +197,38 @@ void Compiler::literal() {
 void Compiler::string() {
     emitConstant(OBJ_VAL(copyString(parser.previous.start + 1,
         parser.previous.length - 2)));
+}
+
+void Compiler::declaration() {
+    statement();
+}
+
+void Compiler::statement() {
+    if (match(TOKEN_PRINT)) {
+        printStatement();
+    } else {
+        expressionStatement();
+    }
+}
+
+bool Compiler::match(TokenType type) {
+    if (!check(type)) return false;
+    advance();
+    return true;
+}
+
+bool Compiler::check(TokenType type) {
+    return parser.current.type == type;
+}
+
+void Compiler::printStatement() {
+    expression();
+    consume(TOKEN_SEMICOLON, "Expect ';' after value.");
+    emitByte(OP_PRINT);
+}
+
+void Compiler::expressionStatement() {
+    expression();
+    consume(TOKEN_SEMICOLON, "Expect ';' after expression.");
+    emitByte(OP_POP);
 }

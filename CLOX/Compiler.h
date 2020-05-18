@@ -43,6 +43,12 @@ private:
 	uint8_t makeConstant(Value value);
 	void literal();
 	void string();
+	void declaration();
+	void statement();
+	bool match(TokenType type);
+	bool check(TokenType type);
+	void printStatement();
+	void expressionStatement();
 	void unary();
 	void binary();
 	void grouping();

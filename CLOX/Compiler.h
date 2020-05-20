@@ -38,20 +38,27 @@ private:
 	void emitReturn();
 	Chunk* currentChunk();
 	void expression();
-	void number();
 	void emitConstant(Value value);
 	uint8_t makeConstant(Value value);
-	void literal();
-	void string();
+	void number(bool canAssign);
+	void literal(bool canAssign);
+	void string(bool canAssign);
+	void unary(bool canAssign);
+	void binary(bool canAssign);
+	void grouping(bool canAssign);
 	void declaration();
 	void statement();
 	bool match(TokenType type);
 	bool check(TokenType type);
 	void printStatement();
 	void expressionStatement();
-	void unary();
-	void binary();
-	void grouping();
+	void synchronize();
+	void varDeclaration();
+	uint8_t parseVariable(const char* errorMessage);
+	uint8_t identifierConstant(Token* name);
+	void defineVariable(uint8_t global);
+	void variable(bool canAssign);
+	void namedVariable(Token name, bool canAssign);
 	void consume(TokenType type, const char* message);
 	void errorAtCurrent(const char* message);
 	void error(const char* message);
@@ -59,7 +66,7 @@ private:
 	Parser parser;
 	Scanner scanner;
 	Chunk* compilingChunk;
-	typedef void (Compiler::* ParseFn)();
+	typedef void (Compiler::* ParseFn)(bool canAssign);
 	struct ParseRule {
 		ParseFn prefix;
 		ParseFn infix;
@@ -93,7 +100,7 @@ private:
 	  { NULL,				 &Compiler::binary,	PREC_COMPARISON }, // TOKEN_LESS_EQUAL
 
 	// Literals.
-	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_IDENTIFIER      
+	  { &Compiler::variable, NULL,				PREC_NONE },       // TOKEN_IDENTIFIER   
 	  { &Compiler::string,   NULL,				PREC_NONE },
 	  { &Compiler::number,	 NULL,				PREC_NONE },       // TOKEN_NUMBER
 

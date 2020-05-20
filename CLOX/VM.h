@@ -36,6 +36,7 @@ private:
 	Value stack[STACK_MAX];
 	Value* stackTop;
 	Compiler compiler = Compiler();
+	Table globals = Table();
 };
 
 VM* vm();

@@ -58,7 +58,7 @@ void Compiler::expression() {
     parsePrecedence(PREC_ASSIGNMENT);
 }
 
-void Compiler::number() {
+void Compiler::number(bool canAssign) {
     double value = strtod(parser.previous.start, NULL);
     emitConstant(NUMBER_VAL(value));
 }
@@ -77,7 +77,7 @@ uint8_t Compiler::makeConstant(Value value) {
     return (uint8_t)constant;
 }
 
-void Compiler::unary() {
+void Compiler::unary(bool canAssign) {
     TokenType operatorType = parser.previous.type;
 
     // Compile the operand.                        
@@ -92,7 +92,7 @@ void Compiler::unary() {
     }
 }
 
-void Compiler::binary() {
+void Compiler::binary(bool canAssign) {
     // Remember the operator.                                
     TokenType operatorType = parser.previous.type;
 
@@ -117,7 +117,7 @@ void Compiler::binary() {
     }
 }
 
-void Compiler::grouping() {
+void Compiler::grouping(bool canAssign) {
     expression();
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
 }
@@ -130,12 +130,17 @@ void Compiler::parsePrecedence(Precedence precedence) {
         return;
     }
     
-    (*this.*prefixRule)();
+    bool canAssign = precedence <= PREC_ASSIGNMENT;
+    (*this.*prefixRule)(canAssign);
 
     while (precedence <= getRule(parser.current.type)->precedence) {
         advance();
         ParseFn infixRule = getRule(parser.previous.type)->infix;
-        (*this.*infixRule)();
+        (*this.*infixRule)(canAssign);
+    }
+
+    if (canAssign && match(TOKEN_EQUAL)) {
+        error("Invalid assignment target.");
     }
 }
 Compiler::ParseRule* Compiler::getRule(TokenType type) {
@@ -184,7 +189,7 @@ void Compiler::errorAt(Token* token, const char* message) {
     parser.hadError = true;
 }
 
-void Compiler::literal() {
+void Compiler::literal(bool canAssign) {
     switch (parser.previous.type) {
     case TOKEN_FALSE: emitByte(OP_FALSE); break;
     case TOKEN_NIL: emitByte(OP_NIL); break;
@@ -194,13 +199,19 @@ void Compiler::literal() {
     }
 }
 
-void Compiler::string() {
+void Compiler::string(bool canAssign) {
     emitConstant(OBJ_VAL(copyString(parser.previous.start + 1,
         parser.previous.length - 2)));
 }
 
 void Compiler::declaration() {
-    statement();
+    if (match(TOKEN_VAR)) {
+        varDeclaration();
+    } else {
+        statement();
+    }
+    
+    if (parser.panicMode) synchronize();
 }
 
 void Compiler::statement() {
@@ -231,4 +242,72 @@ void Compiler::expressionStatement() {
     expression();
     consume(TOKEN_SEMICOLON, "Expect ';' after expression.");
     emitByte(OP_POP);
+}
+
+void Compiler::synchronize() {
+    parser.panicMode = false;
+
+    while (parser.current.type != TOKEN_EOF) {
+        if (parser.previous.type == TOKEN_SEMICOLON) return;
+
+        switch (parser.current.type) {
+        case TOKEN_CLASS:
+        case TOKEN_FUN:
+        case TOKEN_VAR:
+        case TOKEN_FOR:
+        case TOKEN_IF:
+        case TOKEN_WHILE:
+        case TOKEN_PRINT:
+        case TOKEN_RETURN:
+            return;
+
+        default:
+            // Do nothing.                                  
+            ;
+        }
+
+        advance();
+    }
+}
+
+void Compiler::varDeclaration() {
+    uint8_t global = parseVariable("Expect variable name.");
+
+    if (match(TOKEN_EQUAL)) {
+        expression();
+    }
+    else {
+        emitByte(OP_NIL);
+    }
+    consume(TOKEN_SEMICOLON, "Expect ';' after variable declaration.");
+
+    defineVariable(global);
+}
+
+uint8_t Compiler::parseVariable(const char* errorMessage) {
+    consume(TOKEN_IDENTIFIER, errorMessage);
+    return identifierConstant(&parser.previous);
+}
+
+uint8_t Compiler::identifierConstant(Token* name) {
+    return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
+}
+
+void Compiler::defineVariable(uint8_t global) {
+    emitBytes(OP_DEFINE_GLOBAL, global);
+}
+
+void Compiler::variable(bool canAssign) {
+    namedVariable(parser.previous, canAssign);
+}
+
+void Compiler::namedVariable(Token name, bool canAssign) {
+    uint8_t arg = identifierConstant(&name);
+
+    if (canAssign && match(TOKEN_EQUAL)) {
+        expression();
+        emitBytes(OP_SET_GLOBAL, arg);
+    } else {
+        emitBytes(OP_GET_GLOBAL, arg);
+    }
 }

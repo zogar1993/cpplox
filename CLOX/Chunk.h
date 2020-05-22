@@ -6,6 +6,8 @@
 typedef enum {
     OP_CONSTANT,
     OP_POP,
+    OP_GET_LOCAL,
+    OP_SET_LOCAL,
     OP_GET_GLOBAL,
     OP_DEFINE_GLOBAL,
     OP_SET_GLOBAL,
@@ -19,10 +21,13 @@ typedef enum {
     OP_NOT,
     OP_NEGATE,
     OP_PRINT,
-    OP_RETURN,
+    OP_JUMP,
+    OP_JUMP_IF_FALSE,
     OP_NIL,
     OP_TRUE,
     OP_FALSE,
+    OP_LOOP,
+    OP_RETURN,
 } OpCode;
 
 class Chunk {
@@ -34,10 +39,11 @@ public:
     int getCount() const { return count; }
     uint8_t* getCode() const { return code; }
     uint8_t getCode(int offset) const { return code[offset]; }
+    void setCode(int offset, uint8_t op) { code[offset] = op; }
     Value getConstant(int index) const { return constants.getValue(index); }
     int getLine(int index) const { return lines[index]; }
-private:
     int count = 0;
+private:
     int capacity = 0;
     uint8_t* code = NULL;
     int* lines = NULL;

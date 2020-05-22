@@ -26,6 +26,11 @@ typedef enum {
 	PREC_PRIMARY
 } Precedence;
 
+typedef struct {
+	Token name;
+	int depth;
+} Local;
+
 class Compiler
 {
 public:
@@ -48,6 +53,15 @@ private:
 	void grouping(bool canAssign);
 	void declaration();
 	void statement();
+	void forStatement();
+	void whileStatement();
+	void emitLoop(int loopStart);
+	void ifStatement();
+	int emitJump(uint8_t instruction);
+	void patchJump(int offset);
+	void block();
+	void beginScope();
+	void endScope();
 	bool match(TokenType type);
 	bool check(TokenType type);
 	void printStatement();
@@ -55,10 +69,17 @@ private:
 	void synchronize();
 	void varDeclaration();
 	uint8_t parseVariable(const char* errorMessage);
+	void declareVariable();
+	bool identifiersEqual(Token* a, Token* b);
+	void addLocal(Token name);
 	uint8_t identifierConstant(Token* name);
 	void defineVariable(uint8_t global);
+	void markInitialized();
 	void variable(bool canAssign);
 	void namedVariable(Token name, bool canAssign);
+	int resolveLocal(Token* name);
+	void and_(bool canAssign);
+	void or_(bool canAssign);
 	void consume(TokenType type, const char* message);
 	void errorAtCurrent(const char* message);
 	void error(const char* message);
@@ -74,6 +95,11 @@ private:
 	};
 	void parsePrecedence(Precedence precedence);
 	ParseRule* getRule(TokenType type);
+
+	Local locals[UINT8_COUNT];
+	int localCount = 0;
+	int scopeDepth = 0;
+
 	ParseRule rules[40] = {
 
 	// Single-character tokens.   
@@ -105,7 +131,7 @@ private:
 	  { &Compiler::number,	 NULL,				PREC_NONE },       // TOKEN_NUMBER
 
 	// Keywords.
-	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_AND             
+	  { NULL,     &Compiler::and_,    PREC_AND },        // TOKEN_AND              
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_CLASS           
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_ELSE            
 	  { &Compiler::literal,  NULL,				PREC_NONE },       // TOKEN_FALSE           
@@ -113,7 +139,7 @@ private:
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_FUN             
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_IF              
 	  { &Compiler::literal,  NULL,				PREC_NONE },       // TOKEN_NIL             
-	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_OR              
+	  { NULL,     &Compiler::or_,     PREC_OR },         // TOKEN_OR           
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_PRINT           
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_RETURN          
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_SUPER           

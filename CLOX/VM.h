@@ -11,7 +11,7 @@
 #define STACK_MAX (FRAMES_MAX * UINT8_COUNT)
 
 typedef struct {
-	ObjFunction* function;
+	ObjClosure* closure;
 	uint8_t* ip;
 	Value* slots;
 } CallFrame;
@@ -33,6 +33,9 @@ public:
 	Value peek(int distance);
 	bool isFalsey(Value value);
 	void concatenate();
+	bool callValue(Value callee, int argCount);
+	bool call(ObjClosure* closure, int argCount);
+	void defineNative(const char* name, NativeFn function);
 	Obj* objects;
 	Table strings = Table();
 

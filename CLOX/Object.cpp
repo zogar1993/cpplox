@@ -40,6 +40,12 @@ static uint32_t hashString(const char* key, int length) {
     return hash;
 }
 
+ObjClosure* newClosure(ObjFunction* function) {
+    ObjClosure* closure = ALLOCATE_OBJ(ObjClosure, OBJ_CLOSURE);
+    closure->function = function;
+    return closure;
+}
+
 ObjFunction* newFunction() {
     ObjFunction* function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
 
@@ -47,6 +53,12 @@ ObjFunction* newFunction() {
     function->name = NULL;
     function->chunk = Chunk();
     return function;
+}
+
+ObjNative* newNative(NativeFn function) {
+    ObjNative* native = ALLOCATE_OBJ(ObjNative, OBJ_NATIVE);
+    native->function = function;
+    return native;
 }
 
 ObjString* takeString(char* chars, int length) {
@@ -84,8 +96,14 @@ static void printFunction(ObjFunction* function) {
 
 void printObject(Value value) {
     switch (OBJ_TYPE(value)) {
+    case OBJ_CLOSURE:
+        printFunction(AS_CLOSURE(value)->function);
+        break;
     case OBJ_FUNCTION:
         printFunction(AS_FUNCTION(value));
+        break;
+    case OBJ_NATIVE:
+        printf("<native fn>");
         break;
     case OBJ_STRING:
         printf("%s", AS_CSTRING(value));

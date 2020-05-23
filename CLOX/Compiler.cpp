@@ -4,7 +4,7 @@
 
 ObjFunction* Compiler::compile(const char* source)
 {
-    current = &InstructionStack(TYPE_SCRIPT, current);
+    current = &InstructionStack(TYPE_SCRIPT, current, &parser);
 
     Compiler::scanner = Scanner(source);
     //compilingChunk = chunk;
@@ -17,8 +17,7 @@ ObjFunction* Compiler::compile(const char* source)
     return parser.hadError ? NULL : function;
 }
 
-void Compiler::advance()
-{
+void Compiler::advance() {
     parser.previous = parser.current;
 
     for (;;) {
@@ -44,6 +43,7 @@ ObjFunction* Compiler::endCompiler() {
     }
 #endif
 
+    current = current->enclosing;
     return function;
 }
 
@@ -53,6 +53,7 @@ void Compiler::emitBytes(uint8_t byte1, uint8_t byte2) {
 }
 
 void Compiler::emitReturn() {
+    emitByte(OP_NIL);
     emitByte(OP_RETURN);
 }
 
@@ -211,13 +212,22 @@ void Compiler::string(bool canAssign) {
 }
 
 void Compiler::declaration() {
-    if (match(TOKEN_VAR)) {
+    if (match(TOKEN_FUN)) {
+        funDeclaration();
+    } else if (match(TOKEN_VAR)) {
         varDeclaration();
     } else {
         statement();
     }
     
     if (parser.panicMode) synchronize();
+}
+
+void Compiler::funDeclaration() {
+    uint8_t global = parseVariable("Expect function name.");
+    markInitialized();
+    function(TYPE_FUNCTION);
+    defineVariable(global);
 }
 
 void Compiler::statement() {
@@ -227,6 +237,8 @@ void Compiler::statement() {
         forStatement();
     } else if (match(TOKEN_IF)) {
         ifStatement();
+    } else if (match(TOKEN_RETURN)) {
+        returnStatement();
     } else if (match(TOKEN_WHILE)) {
         whileStatement();
     } else if (match(TOKEN_LEFT_BRACE)) {
@@ -237,6 +249,20 @@ void Compiler::statement() {
         expressionStatement();
     }
 }
+void Compiler::returnStatement() {
+    if (current->type == TYPE_SCRIPT) {
+        error("Cannot return from top-level code.");
+    }
+
+    if (match(TOKEN_SEMICOLON)) {
+        emitReturn();
+    } else {
+        expression();
+        consume(TOKEN_SEMICOLON, "Expect ';' after return value.");
+        emitByte(OP_RETURN);
+    }
+}
+
 
 void Compiler::forStatement() {
     beginScope();
@@ -495,6 +521,7 @@ void Compiler::defineVariable(uint8_t global) {
 }
 
 void Compiler::markInitialized() {
+    if (current->scopeDepth == 0) return;
     current->locals[current->localCount - 1].depth = current->scopeDepth;
 }
 
@@ -555,4 +582,53 @@ void Compiler::or_(bool canAssign) {
 
     parsePrecedence(PREC_OR);
     patchJump(endJump);
+}
+    
+void Compiler::function(FunctionType type) {
+    InstructionStack compiler(type, current, &parser);
+    beginScope();
+
+    // Compile the parameter list.                                
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after function name.");
+    if (!check(TOKEN_RIGHT_PAREN)) {
+        do {
+            current->function->arity++;
+            if (current->function->arity > 255) {
+                errorAtCurrent("Cannot have more than 255 parameters.");
+            }
+
+            uint8_t paramConstant = parseVariable("Expect parameter name.");
+            defineVariable(paramConstant);
+        } while (match(TOKEN_COMMA));
+    }
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
+
+    // The body.                                                  
+    consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
+    block();
+
+    // Create the function object.                                
+    ObjFunction* function = endCompiler();
+    emitBytes(OP_CLOSURE, makeConstant(OBJ_VAL(function)));
+}
+
+void Compiler::call(bool canAssign) {
+    uint8_t argCount = argumentList();
+    emitBytes(OP_CALL, argCount);
+}
+
+uint8_t Compiler::argumentList() {
+    uint8_t argCount = 0;
+    if (!check(TOKEN_RIGHT_PAREN)) {
+        do {
+            expression();
+            if (argCount == 255) {
+                error("Cannot have more than 255 arguments.");
+            }
+            argCount++;
+        } while (match(TOKEN_COMMA));
+    }
+
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after arguments.");
+    return argCount;
 }

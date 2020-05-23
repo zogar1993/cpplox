@@ -27,7 +27,9 @@ private:
 	void binary(bool canAssign);
 	void grouping(bool canAssign);
 	void declaration();
+	void funDeclaration();
 	void statement();
+	void returnStatement();
 	void forStatement();
 	void whileStatement();
 	void emitLoop(int loopStart);
@@ -55,6 +57,9 @@ private:
 	int resolveLocal(Token* name);
 	void and_(bool canAssign);
 	void or_(bool canAssign);
+	void function(FunctionType type);
+	void call(bool canAssign);
+	uint8_t argumentList();
 	void consume(TokenType type, const char* message);
 	void errorAtCurrent(const char* message);
 	void error(const char* message);
@@ -73,7 +78,7 @@ private:
 	InstructionStack* current = &InstructionStack(); //would not this leak?
 	ParseRule rules[40] = {
 	// Single-character tokens.   
-	  { &Compiler::grouping, NULL,				PREC_NONE },       // TOKEN_LEFT_PAREN      
+	  { &Compiler::grouping, NULL,				PREC_CALL},       // TOKEN_LEFT_PAREN      
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_RIGHT_PAREN     
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_LEFT_BRACE
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_RIGHT_BRACE     
@@ -92,7 +97,7 @@ private:
 	  { NULL,				 &Compiler::binary,	PREC_EQUALITY },   // TOKEN_EQUAL_EQUAL     
 	  { NULL,				 &Compiler::binary,	PREC_COMPARISON }, // TOKEN_GREATER         
 	  { NULL,				 &Compiler::binary,	PREC_COMPARISON }, // TOKEN_GREATER_EQUAL   
-	  { NULL,				 &Compiler::binary,	PREC_COMPARISON }, // TOKEN_LESS            
+	  { NULL,				 &Compiler::binary,	PREC_COMPARISON }, // TOKEN_LESS
 	  { NULL,				 &Compiler::binary,	PREC_COMPARISON }, // TOKEN_LESS_EQUAL
 
 	// Literals.
@@ -101,7 +106,7 @@ private:
 	  { &Compiler::number,	 NULL,				PREC_NONE },       // TOKEN_NUMBER
 
 	// Keywords.
-	  { NULL,     &Compiler::and_,    PREC_AND },        // TOKEN_AND              
+	  { NULL,				 &Compiler::and_,   PREC_AND },        // TOKEN_AND              
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_CLASS           
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_ELSE            
 	  { &Compiler::literal,  NULL,				PREC_NONE },       // TOKEN_FALSE           
@@ -109,7 +114,7 @@ private:
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_FUN             
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_IF              
 	  { &Compiler::literal,  NULL,				PREC_NONE },       // TOKEN_NIL             
-	  { NULL,     &Compiler::or_,     PREC_OR },         // TOKEN_OR           
+	  { NULL,				 &Compiler::or_,    PREC_OR },         // TOKEN_OR           
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_PRINT           
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_RETURN          
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_SUPER           

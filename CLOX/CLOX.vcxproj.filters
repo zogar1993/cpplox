@@ -45,6 +45,9 @@
     <ClCompile Include="Table.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="InstructionStack.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.h">
@@ -75,6 +78,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Table.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="InstructionStack.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CompilerTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

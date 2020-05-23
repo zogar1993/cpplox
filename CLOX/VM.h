@@ -5,8 +5,16 @@
 #include "value.h"
 #include "compiler.h"
 #include "table.h"
+#include "object.h"
 
-#define STACK_MAX 256
+#define FRAMES_MAX 64                       
+#define STACK_MAX (FRAMES_MAX * UINT8_COUNT)
+
+typedef struct {
+	ObjFunction* function;
+	uint8_t* ip;
+	Value* slots;
+} CallFrame;
 
 typedef enum {
 	INTERPRET_OK,
@@ -27,6 +35,9 @@ public:
 	void concatenate();
 	Obj* objects;
 	Table strings = Table();
+
+	CallFrame frames[FRAMES_MAX];
+	int frameCount;
 private:
 	const Chunk* chunk;
 	uint8_t* ip;

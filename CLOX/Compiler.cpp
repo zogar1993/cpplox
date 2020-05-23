@@ -2,17 +2,19 @@
 #include "common.h"
 #include "debug.h"
 
-bool Compiler::compile(const char* source, Chunk* chunk)
+ObjFunction* Compiler::compile(const char* source)
 {
+    current = &InstructionStack(TYPE_SCRIPT, current);
+
     Compiler::scanner = Scanner(source);
-    compilingChunk = chunk;
+    //compilingChunk = chunk;
     advance();
 
     while (!match(TOKEN_EOF))
         declaration();    
 
-    endCompiler();
-    return !parser.hadError;
+    ObjFunction* function = endCompiler();
+    return parser.hadError ? NULL : function;
 }
 
 void Compiler::advance()
@@ -31,14 +33,18 @@ void Compiler::emitByte(uint8_t byte) {
     currentChunk()->write(byte, parser.previous.line);
 }
 
-void Compiler::endCompiler() {
+ObjFunction* Compiler::endCompiler() {
     emitReturn();
+    ObjFunction* function = current->function;
 
 #ifdef DEBUG_PRINT_CODE                      
     if (!parser.hadError) {
-        disassembleChunk(currentChunk(), "code");
+        disassembleChunk(currentChunk(),
+            function->name != NULL ? function->name->chars : "<script>");
     }
-#endif 
+#endif
+
+    return function;
 }
 
 void Compiler::emitBytes(uint8_t byte1, uint8_t byte2) {
@@ -51,7 +57,7 @@ void Compiler::emitReturn() {
 }
 
 Chunk* Compiler::currentChunk() {
-    return compilingChunk;
+    return &current->function->chunk;  
 }
 
 void Compiler::expression() {
@@ -357,15 +363,15 @@ void Compiler::block() {
 }
 
 void Compiler::beginScope() {
-    scopeDepth++;
+    current->scopeDepth++;
 }
 
 void Compiler::endScope() {
-    scopeDepth--;
+    current->scopeDepth--;
 
-    while (localCount > 0 && locals[localCount - 1].depth > scopeDepth) {
+    while (current->localCount > 0 && current->locals[current->localCount - 1].depth > current->scopeDepth) {
         emitByte(OP_POP);
-        localCount--;
+        current->localCount--;
     }
 }
 
@@ -435,20 +441,20 @@ uint8_t Compiler::parseVariable(const char* errorMessage) {
     consume(TOKEN_IDENTIFIER, errorMessage);
 
     declareVariable();
-    if (scopeDepth > 0) return 0;
+    if (current->scopeDepth > 0) return 0;
 
     return identifierConstant(&parser.previous);
 }
 
 void Compiler::declareVariable() {
     // Global variables are implicitly declared.
-    if (scopeDepth == 0) return;
+    if (current->scopeDepth == 0) return;
 
     Token* name = &parser.previous;
 
-    for (int i = localCount - 1; i >= 0; i--) {
-        Local* local = &locals[i];
-        if (local->depth != -1 && local->depth < scopeDepth)
+    for (int i = current->localCount - 1; i >= 0; i--) {
+        Local* local = &current->locals[i];
+        if (local->depth != -1 && local->depth < current->scopeDepth)
             break;
 
         if (identifiersEqual(name, &local->name)) {
@@ -465,12 +471,12 @@ bool Compiler::identifiersEqual(Token* a, Token* b) {
 }
 
 void Compiler::addLocal(Token name) {
-    if (localCount == UINT8_COUNT) {
+    if (current->localCount == UINT8_COUNT) {
         error("Too many local variables in function.");
         return;
     }
 
-    Local* local = &locals[localCount++];
+    Local* local = &current->locals[current->localCount++];
     local->name = name;
     local->depth = -1;
 }
@@ -480,7 +486,7 @@ uint8_t Compiler::identifierConstant(Token* name) {
 }
 
 void Compiler::defineVariable(uint8_t global) {
-    if (scopeDepth > 0) {
+    if (current->scopeDepth > 0) {
         markInitialized();
         return;
     }
@@ -489,7 +495,7 @@ void Compiler::defineVariable(uint8_t global) {
 }
 
 void Compiler::markInitialized() {
-    locals[localCount - 1].depth = scopeDepth;
+    current->locals[current->localCount - 1].depth = current->scopeDepth;
 }
 
 void Compiler::variable(bool canAssign) {
@@ -518,8 +524,8 @@ void Compiler::namedVariable(Token name, bool canAssign) {
 }
 
 int Compiler::resolveLocal(Token* name) {
-    for (int i = localCount - 1; i >= 0; i--) {
-        Local* local = &locals[i];
+    for (int i = current->localCount - 1; i >= 0; i--) {
+        Local* local = &current->locals[i];
         if (identifiersEqual(name, &local->name)) {
             if (local->depth == -1) {
                 error("Cannot read local variable in its own initializer.");

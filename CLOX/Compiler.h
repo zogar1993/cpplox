@@ -1,47 +1,22 @@
 #pragma once
 
 #include "Chunk.h"
-#include "Scanner.h"
 #include "common.h"
 #include "object.h"
-
-typedef struct {
-	Token current;
-	Token previous;
-	bool hadError = false;
-	bool panicMode = false;
-} Parser;
-
-typedef enum {
-	PREC_NONE,
-	PREC_ASSIGNMENT,  // =        
-	PREC_OR,          // or       
-	PREC_AND,         // and      
-	PREC_EQUALITY,    // == !=    
-	PREC_COMPARISON,  // < > <= >=
-	PREC_TERM,        // + -      
-	PREC_FACTOR,      // * /      
-	PREC_UNARY,       // ! -      
-	PREC_CALL,        // . ()     
-	PREC_PRIMARY
-} Precedence;
-
-typedef struct {
-	Token name;
-	int depth;
-} Local;
+#include "CompilerTypes.h"
+#include "InstructionStack.h"
 
 class Compiler
 {
 public:
-	bool compile(const char* source, Chunk* chunk);
+	ObjFunction* compile(const char* source);
 private:
+	Chunk* currentChunk();
 	void advance();
 	void emitByte(uint8_t byte);
-	void endCompiler();
+	ObjFunction* endCompiler();
 	void emitBytes(uint8_t byte1, uint8_t byte2);
 	void emitReturn();
-	Chunk* currentChunk();
 	void expression();
 	void emitConstant(Value value);
 	uint8_t makeConstant(Value value);
@@ -95,13 +70,8 @@ private:
 	};
 	void parsePrecedence(Precedence precedence);
 	ParseRule* getRule(TokenType type);
-
-	Local locals[UINT8_COUNT];
-	int localCount = 0;
-	int scopeDepth = 0;
-
+	InstructionStack* current = &InstructionStack(); //would not this leak?
 	ParseRule rules[40] = {
-
 	// Single-character tokens.   
 	  { &Compiler::grouping, NULL,				PREC_NONE },       // TOKEN_LEFT_PAREN      
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_RIGHT_PAREN     

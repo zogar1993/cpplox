@@ -152,6 +152,7 @@
     <ClCompile Include="CLOX.cpp" />
     <ClCompile Include="Compiler.cpp" />
     <ClCompile Include="Debug.cpp" />
+    <ClCompile Include="InstructionStack.cpp" />
     <ClCompile Include="Memory.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="Scanner.cpp" />
@@ -163,7 +164,9 @@
     <ClInclude Include="Chunk.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="Compiler.h" />
+    <ClInclude Include="CompilerTypes.h" />
     <ClInclude Include="Debug.h" />
+    <ClInclude Include="InstructionStack.h" />
     <ClInclude Include="Memory.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="Scanner.h" />

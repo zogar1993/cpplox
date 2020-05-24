@@ -154,11 +154,6 @@ Compiler::ParseRule* Compiler::getRule(TokenType type) {
     return &rules[type];
 }
 
-//static void expression();
-//static ParseRule* getRule(TokenType type);
-//static void parsePrecedence(Precedence precedence);
-
-
 void Compiler::consume(TokenType type, const char* message) {
     if (parser.current.type == type) {
         advance();
@@ -623,7 +618,10 @@ void Compiler::or_(bool canAssign) {
 }
     
 void Compiler::function(FunctionType type) {
-    InstructionStack compiler(type, current, &parser);
+
+    InstructionStack compiler = InstructionStack(type, current, &parser);
+    current = &compiler;
+
     beginScope();
 
     // Compile the parameter list.                                

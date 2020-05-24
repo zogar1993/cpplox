@@ -80,7 +80,7 @@ private:
 	InstructionStack* current = NULL;
 	ParseRule rules[40] = {
 	// Single-character tokens.   
-	  { &Compiler::grouping, NULL,				PREC_CALL},       // TOKEN_LEFT_PAREN      
+	  { &Compiler::grouping, &Compiler::call,	PREC_CALL},       // TOKEN_LEFT_PAREN      
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_RIGHT_PAREN     
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_LEFT_BRACE
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_RIGHT_BRACE     

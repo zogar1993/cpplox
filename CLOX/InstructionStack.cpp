@@ -5,13 +5,12 @@ InstructionStack::InstructionStack(FunctionType type, InstructionStack* current,
 	function = NULL;
 	InstructionStack::type = type;
 	function = newFunction();
-	//current = this; // or is that done in caller ?
 
 	if (type != TYPE_SCRIPT) {
-		current->function->name = copyString(parser->previous.start, parser->previous.length);
+		function->name = copyString(parser->previous.start, parser->previous.length);
 	}
 
-	Local* local = &current->locals[current->localCount++];
+	Local* local = &locals[localCount++];
 	local->depth = 0;
 	local->name.start = "";
 	local->name.length = 0;

@@ -27,6 +27,7 @@ typedef enum {
 typedef struct {
 	Token name;
 	int depth;
+	bool isCaptured;
 } Local;
 
 typedef struct {

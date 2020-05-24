@@ -34,6 +34,7 @@ public:
 	bool isFalsey(Value value);
 	void concatenate();
 	bool callValue(Value callee, int argCount);
+	void closeUpvalues(Value* last);
 	bool call(ObjClosure* closure, int argCount);
 	void defineNative(const char* name, NativeFn function);
 	ObjUpvalue* captureUpvalue(Value* local);
@@ -52,6 +53,7 @@ private:
 	Value* stackTop;
 	Compiler compiler = Compiler();
 	Table globals = Table();
+	ObjUpvalue* openUpvalues;
 };
 
 VM* vm();

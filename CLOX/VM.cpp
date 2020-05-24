@@ -176,8 +176,14 @@ InterpretResult VM::run() {
                 }
                 break;
             }
+            case OP_CLOSE_UPVALUE:
+                closeUpvalues(stackTop - 1);
+                pop();
+                break;
             case OP_RETURN: {
                 Value result = pop();
+
+                closeUpvalues(frame->slots);
 
                 frameCount--;
                 if (frameCount == 0) {
@@ -238,6 +244,7 @@ void VM::runtimeError(const char* format, ...) {
 VM::VM() {
     resetStack();
     objects = NULL;
+    openUpvalues = NULL;
 
     defineNative("clock", clockNative);
 }
@@ -319,6 +326,16 @@ bool VM::callValue(Value callee, int argCount) {
     return false;
 }
 
+void VM::closeUpvalues(Value* last) {
+    while (openUpvalues != NULL &&
+        openUpvalues->location >= last) {
+        ObjUpvalue* upvalue = openUpvalues;
+        upvalue->closed = *upvalue->location;
+        upvalue->location = &upvalue->closed;
+        openUpvalues = upvalue->next;
+    }
+}
+
 bool VM::call(ObjClosure* closure, int argCount) {
     if (argCount != closure->function->arity) {
         runtimeError("Expected %d arguments but got %d.", closure->function->arity, argCount);
@@ -347,7 +364,26 @@ void VM::defineNative(const char* name, NativeFn function) {
 }
 
 ObjUpvalue* VM::captureUpvalue(Value* local) {
+    ObjUpvalue* prevUpvalue = NULL;
+    ObjUpvalue* upvalue = openUpvalues;
+
+    while (upvalue != NULL && upvalue->location > local) {
+        prevUpvalue = upvalue;
+        upvalue = upvalue->next;
+    }
+
+    if (upvalue != NULL && upvalue->location == local) return upvalue;
+
     ObjUpvalue* createdUpvalue = newUpvalue(local);
+
+    createdUpvalue->next = upvalue;
+
+    if (prevUpvalue == NULL) {
+        openUpvalues = createdUpvalue;
+    } else {
+        prevUpvalue->next = createdUpvalue;
+    }
+
     return createdUpvalue;
 }
 

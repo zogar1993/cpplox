@@ -13,5 +13,6 @@ InstructionStack::InstructionStack(FunctionType type, InstructionStack* current,
 	Local* local = &locals[localCount++];
 	local->depth = 0;
 	local->name.start = "";
+	local->isCaptured = false;
 	local->name.length = 0;
 }

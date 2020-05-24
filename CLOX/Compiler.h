@@ -54,7 +54,9 @@ private:
 	void markInitialized();
 	void variable(bool canAssign);
 	void namedVariable(Token name, bool canAssign);
-	int resolveLocal(Token* name);
+	int resolveUpvalue(InstructionStack* compiler, Token* name);
+	int addUpvalue(InstructionStack* compiler, uint8_t index, bool isLocal);
+	int resolveLocal(InstructionStack* current, Token* name);
 	void and_(bool canAssign);
 	void or_(bool canAssign);
 	void function(FunctionType type);
@@ -75,7 +77,7 @@ private:
 	};
 	void parsePrecedence(Precedence precedence);
 	ParseRule* getRule(TokenType type);
-	InstructionStack* current = &InstructionStack(); //would not this leak?
+	InstructionStack* current = NULL;
 	ParseRule rules[40] = {
 	// Single-character tokens.   
 	  { &Compiler::grouping, NULL,				PREC_CALL},       // TOKEN_LEFT_PAREN      

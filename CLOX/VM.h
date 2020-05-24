@@ -36,6 +36,7 @@ public:
 	bool callValue(Value callee, int argCount);
 	bool call(ObjClosure* closure, int argCount);
 	void defineNative(const char* name, NativeFn function);
+	ObjUpvalue* captureUpvalue(Value* local);
 	Obj* objects;
 	Table strings = Table();
 

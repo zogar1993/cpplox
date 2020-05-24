@@ -23,10 +23,16 @@ typedef enum {
 	PREC_PRIMARY
 } Precedence;
 
+
 typedef struct {
 	Token name;
 	int depth;
 } Local;
+
+typedef struct {
+	uint8_t index;
+	bool isLocal;
+} Upvalue;
 
 typedef enum {
 	TYPE_FUNCTION,

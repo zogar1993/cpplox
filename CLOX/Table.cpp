@@ -95,6 +95,14 @@ Entry* Table::findEntry(Entry* entries, int capacity, ObjString* key) {
     }
 }
 
+void Table::mark() {
+    for (int i = 0; i < capacity; i++) {
+        Entry* entry = &entries[i];
+        markObject((Obj*)entry->key);
+        markValue(entry->value);
+    }
+}
+
 void Table::adjustCapacity(int capacity) {
     Entry* entries = ALLOCATE(Entry, capacity);
     for (int i = 0; i < capacity; i++) {

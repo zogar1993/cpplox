@@ -10,6 +10,7 @@ class Compiler
 {
 public:
 	ObjFunction* compile(const char* source);
+	void markRoots();
 private:
 	Chunk* currentChunk();
 	void advance();

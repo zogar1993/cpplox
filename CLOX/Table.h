@@ -21,6 +21,7 @@ public:
     bool remove(ObjString* key);
     Entry* entries;
     int capacity;
+    void mark();
 private:
     void adjustCapacity(int capacity);
     int count;

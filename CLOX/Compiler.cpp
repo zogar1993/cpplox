@@ -1,6 +1,7 @@
 #include "Compiler.h"
 #include "common.h"
 #include "debug.h"
+#include "memory.h"
 
 ObjFunction* Compiler::compile(const char* source)
 {
@@ -15,6 +16,14 @@ ObjFunction* Compiler::compile(const char* source)
 
     ObjFunction* function = endCompiler();
     return parser.hadError ? NULL : function;
+}
+
+void Compiler::markRoots() {
+    InstructionStack* compiler = current;
+    while (compiler != NULL) {
+        markObject((Obj*)compiler->function);
+        compiler = compiler->enclosing;
+    }
 }
 
 void Compiler::advance() {

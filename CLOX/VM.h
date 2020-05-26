@@ -43,17 +43,18 @@ public:
 
 	CallFrame frames[FRAMES_MAX];
 	int frameCount;
+
+	Value stack[STACK_MAX];
+	Value* stackTop;
+	Table globals = Table();
+	ObjUpvalue* openUpvalues;
+	Compiler compiler = Compiler();
 private:
 	const Chunk* chunk;
 	uint8_t* ip;
 	InterpretResult run();
 	void resetStack();
 	void runtimeError(const char* format, ...);
-	Value stack[STACK_MAX];
-	Value* stackTop;
-	Compiler compiler = Compiler();
-	Table globals = Table();
-	ObjUpvalue* openUpvalues;
 };
 
 VM* vm();

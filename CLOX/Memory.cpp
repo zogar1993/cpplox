@@ -200,7 +200,7 @@ void markObject(Obj* object) {
 
     if (vm()->grayCapacity < vm()->grayCount + 1) {
         vm()->grayCapacity = GROW_CAPACITY(vm()->grayCapacity);
-        vm()->grayStack = realloc(vm()->grayStack, sizeof(Obj*) * vm()->grayCapacity);
+        vm()->grayStack = (Obj**)realloc(vm()->grayStack, sizeof(Obj*) * vm()->grayCapacity);//TODO verificar que funca
     }
 
     vm()->grayStack[vm()->grayCount++] = object;

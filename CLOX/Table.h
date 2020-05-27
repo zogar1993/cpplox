@@ -22,6 +22,7 @@ public:
     Entry* entries;
     int capacity;
     void mark();
+    void removeWhite();
 private:
     void adjustCapacity(int capacity);
     int count;

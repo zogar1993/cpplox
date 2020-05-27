@@ -30,7 +30,9 @@ static ObjString* allocateString(char* chars, int length, uint32_t hash) {
     string->chars = chars;
     string->hash = hash;
 
+    vm()->push(OBJ_VAL(string));
     vm()->strings.set(string, NIL_VAL);
+    vm()->pop();
 
     return string;
 }

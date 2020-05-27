@@ -2,12 +2,12 @@
 
 #include "Scanner.h"
 
-typedef struct {
+struct Parser {
 	Token current;
 	Token previous;
 	bool hadError = false;
 	bool panicMode = false;
-} Parser;
+};
 
 typedef enum {
 	PREC_NONE,

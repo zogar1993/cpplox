@@ -245,8 +245,14 @@ VM::VM() {
     resetStack();
     objects = NULL;
     openUpvalues = NULL;
+    bytesAllocated = 0;
+    nextGC = 1024 * 1024;
+    grayCount = 0;
+    grayCapacity = 0;
+    grayStack = NULL;
 
     defineNative("clock", clockNative);
+
 }
 
 void VM::free()
@@ -291,8 +297,8 @@ bool VM::isFalsey(Value value) {
 }
 
 void VM::concatenate() {
-    ObjString* b = AS_STRING(pop());
-    ObjString* a = AS_STRING(pop());
+    ObjString* b = AS_STRING(peek(0));
+    ObjString* a = AS_STRING(peek(1));
 
     int length = a->length + b->length;
     char* chars = ALLOCATE(char, length + 1);
@@ -301,6 +307,9 @@ void VM::concatenate() {
     chars[length] = '\0';
 
     ObjString* result = takeString(chars, length);
+
+    pop();
+    pop();
     push(OBJ_VAL(result));
 }
 

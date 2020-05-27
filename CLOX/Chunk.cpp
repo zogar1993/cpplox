@@ -1,5 +1,6 @@
 #include "chunk.h"
 #include "memory.h"
+#include "vm.h"  
 
 Chunk::Chunk()
 {
@@ -20,9 +21,10 @@ void Chunk::write(uint8_t byte, int line)
     count++;
 }
 
-int Chunk::addConstant(Value value)
-{
+int Chunk::addConstant(Value value) {
+    vm()->push(value);
     constants.write(value);
+    vm()->pop();
     return constants.getCount() - 1;
 }
 

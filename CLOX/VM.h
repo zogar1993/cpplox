@@ -44,6 +44,13 @@ public:
 	CallFrame frames[FRAMES_MAX];
 	int frameCount;
 
+	int grayCount;
+	int grayCapacity;
+	Obj** grayStack;
+
+	size_t bytesAllocated;
+	size_t nextGC;
+
 	Value stack[STACK_MAX];
 	Value* stackTop;
 	Table globals = Table();

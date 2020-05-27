@@ -48,9 +48,10 @@ public:
     Value getConstant(int index) const { return constants.getValue(index); }
     int getLine(int index) const { return lines[index]; }
     int count = 0;
+
+    ValueArray constants = ValueArray();
 private:
     int capacity = 0;
     uint8_t* code = NULL;
     int* lines = NULL;
-    ValueArray constants = ValueArray();
 };

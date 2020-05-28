@@ -33,6 +33,7 @@ public:
 	Value peek(int distance);
 	bool isFalsey(Value value);
 	void concatenate();
+	void defineMethod(ObjString* name);
 	bool callValue(Value callee, int argCount);
 	void closeUpvalues(Value* last);
 	bool call(ObjClosure* closure, int argCount);

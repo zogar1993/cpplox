@@ -232,6 +232,9 @@ InterpretResult VM::run() {
             case OP_CLASS:
                 push(OBJ_VAL(newClass(READ_STRING())));
                 break;
+            case OP_METHOD:
+                defineMethod(READ_STRING());
+                break;
         }
     }
 
@@ -346,6 +349,13 @@ void VM::concatenate() {
     pop();
     pop();
     push(OBJ_VAL(result));
+}
+
+void VM::defineMethod(ObjString* name) {
+    Value method = peek(0);
+    ObjClass* klass = AS_CLASS(peek(1));
+    klass->methods.set(name, method);
+    pop();
 }
 
 bool VM::callValue(Value callee, int argCount) {

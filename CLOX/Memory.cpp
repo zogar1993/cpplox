@@ -46,6 +46,7 @@ static void blackenObject(Obj* object) {
     case OBJ_CLASS: {
         ObjClass* klass = (ObjClass*)object;
         markObject((Obj*)klass->name);
+        klass->methods.mark();
         break;
     }
     case OBJ_CLOSURE: {
@@ -84,6 +85,8 @@ static void freeObject(Obj* object) {
 
     switch (object->type) {
     case OBJ_CLASS: {
+        ObjClass* klass = (ObjClass*)object;
+        klass->methods.free();
         FREE(ObjClass, object);
         break;
     }

@@ -24,6 +24,7 @@ private:
 	void number(bool canAssign);
 	void literal(bool canAssign);
 	void string(bool canAssign);
+	void method();
 	void classDeclaration();
 	void unary(bool canAssign);
 	void binary(bool canAssign);

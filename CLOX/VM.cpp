@@ -110,8 +110,11 @@ InterpretResult VM::run() {
                     push(value);
                     break;
                 }
-                runtimeError("Undefined property '%s'.", name->chars);
-                return INTERPRET_RUNTIME_ERROR;
+
+                if (!bindMethod(instance->klass, name)) {
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
             }
             case OP_SET_PROPERTY: {
                 if (!IS_INSTANCE(peek(1))) {
@@ -201,8 +204,7 @@ InterpretResult VM::run() {
                     uint8_t index = READ_BYTE();
                     if (isLocal) {
                         closure->upvalues[i] = captureUpvalue(frame->slots + index);
-                    }
-                    else {
+                    } else {
                         closure->upvalues[i] = frame->closure->upvalues[index];
                     }
                 }
@@ -248,6 +250,19 @@ InterpretResult VM::run() {
 void VM::resetStack() {
     stackTop = stack;
     frameCount = 0;
+}
+
+bool VM::bindMethod(ObjClass* klass, ObjString* name) {
+    Value method;
+    if (!klass->methods.get(name, &method)) {
+        runtimeError("Undefined property '%s'.", name->chars);
+        return false;
+    }
+
+    ObjBoundMethod* bound = newBoundMethod(peek(0), AS_CLOSURE(method));
+    pop();
+    push(OBJ_VAL(bound));
+    return true;
 }
 
 static Value clockNative(int argCount, Value* args) {
@@ -361,6 +376,10 @@ void VM::defineMethod(ObjString* name) {
 bool VM::callValue(Value callee, int argCount) {
     if (IS_OBJ(callee)) {
         switch (OBJ_TYPE(callee)) {
+        case OBJ_BOUND_METHOD: {
+            ObjBoundMethod* bound = AS_BOUND_METHOD(callee);
+            return call(bound->method, argCount);
+        }
         case OBJ_CLASS: {
             ObjClass* klass = AS_CLASS(callee);
             stackTop[-argCount - 1] = OBJ_VAL(newInstance(klass));

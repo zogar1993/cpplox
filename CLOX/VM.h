@@ -62,6 +62,7 @@ private:
 	uint8_t* ip;
 	InterpretResult run();
 	void resetStack();
+	bool bindMethod(ObjClass* klass, ObjString* name);
 	void runtimeError(const char* format, ...);
 };
 

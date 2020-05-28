@@ -15,4 +15,12 @@ InstructionStack::InstructionStack(FunctionType type, InstructionStack* current,
 	local->name.start = "";
 	local->isCaptured = false;
 	local->name.length = 0;
+
+	if (type != TYPE_FUNCTION) {
+		local->name.start = "this";
+		local->name.length = 4;
+	} else {
+		local->name.start = "";
+		local->name.length = 0;
+	}
 }

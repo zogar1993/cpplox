@@ -200,6 +200,14 @@ void Compiler::errorAt(Token* token, const char* message) {
     parser.hadError = true;
 }
 
+void Compiler::this_(bool canAssign) {
+    if (currentClass == NULL) {
+        error("Cannot use 'this' outside of a class.");
+        return;
+    }
+    variable(false);
+}
+
 void Compiler::literal(bool canAssign) {
     switch (parser.previous.type) {
     case TOKEN_FALSE: emitByte(OP_FALSE); break;
@@ -218,7 +226,7 @@ void Compiler::string(bool canAssign) {
 void Compiler::method() {
     consume(TOKEN_IDENTIFIER, "Expect method name.");
     uint8_t constant = identifierConstant(&parser.previous);
-    FunctionType type = TYPE_FUNCTION;
+    FunctionType type = TYPE_METHOD;
     function(type);
     emitBytes(OP_METHOD, constant);
 }
@@ -232,6 +240,11 @@ void Compiler::classDeclaration() {
     emitBytes(OP_CLASS, nameConstant);
     defineVariable(nameConstant);
 
+    ClassCompiler classCompiler;
+    classCompiler.name = parser.previous;
+    classCompiler.enclosing = currentClass;
+    currentClass = &classCompiler;
+
     namedVariable(className, false);
     consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
     while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
@@ -239,6 +252,8 @@ void Compiler::classDeclaration() {
     }
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
     emitByte(OP_POP);
+
+    currentClass = currentClass->enclosing;
 }
 
 void Compiler::declaration() {

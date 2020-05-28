@@ -70,9 +70,13 @@ private:
 	void errorAtCurrent(const char* message);
 	void error(const char* message);
 	void errorAt(Token* token, const char* message);
+	void this_(bool canAssign);
 	Parser parser;
 	Scanner scanner;
 	Chunk* compilingChunk;
+
+	ClassCompiler* currentClass = NULL;
+
 	typedef void (Compiler::* ParseFn)(bool canAssign);
 	struct ParseRule {
 		ParseFn prefix;
@@ -124,7 +128,7 @@ private:
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_PRINT           
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_RETURN          
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_SUPER           
-	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_THIS            
+	  { &Compiler::this_,    NULL,    PREC_NONE },       // TOKEN_THIS        
 	  { &Compiler::literal,  NULL,				PREC_NONE },       // TOKEN_TRUE            
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_VAR             
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_WHILE

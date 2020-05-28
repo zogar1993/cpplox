@@ -37,5 +37,11 @@ typedef struct {
 
 typedef enum {
 	TYPE_FUNCTION,
+	TYPE_METHOD,
 	TYPE_SCRIPT
 } FunctionType;
+
+typedef struct ClassCompiler {
+	struct ClassCompiler* enclosing;
+	Token name;
+} ClassCompiler;

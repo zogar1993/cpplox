@@ -285,8 +285,7 @@ void VM::runtimeError(const char* format, ...) {
             function->chunk.getLine(instruction));
         if (function->name == NULL) {
             fprintf(stderr, "script\n");
-        }
-        else {
+        } else {
             fprintf(stderr, "%s()\n", function->name->chars);
         }
     }
@@ -378,6 +377,7 @@ bool VM::callValue(Value callee, int argCount) {
         switch (OBJ_TYPE(callee)) {
         case OBJ_BOUND_METHOD: {
             ObjBoundMethod* bound = AS_BOUND_METHOD(callee);
+            stackTop[-argCount - 1] = bound->receiver;
             return call(bound->method, argCount);
         }
         case OBJ_CLASS: {

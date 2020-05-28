@@ -215,8 +215,22 @@ void Compiler::string(bool canAssign) {
         parser.previous.length - 2)));
 }
 
+void Compiler::classDeclaration() {
+    consume(TOKEN_IDENTIFIER, "Expect class name.");
+    uint8_t nameConstant = identifierConstant(&parser.previous);
+    declareVariable();
+
+    emitBytes(OP_CLASS, nameConstant);
+    defineVariable(nameConstant);
+
+    consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
+    consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
+}
+
 void Compiler::declaration() {
-    if (match(TOKEN_FUN)) {
+    if (match(TOKEN_CLASS)) {
+        classDeclaration();
+    } else if (match(TOKEN_FUN)) {
         funDeclaration();
     } else if (match(TOKEN_VAR)) {
         varDeclaration();
@@ -672,6 +686,20 @@ void Compiler::call(bool canAssign) {
     uint8_t argCount = argumentList();
     emitBytes(OP_CALL, argCount);
 }
+
+void Compiler::dot(bool canAssign) {
+    consume(TOKEN_IDENTIFIER, "Expect property name after '.'.");
+    uint8_t name = identifierConstant(&parser.previous);
+
+    if (canAssign && match(TOKEN_EQUAL)) {
+        expression();
+        emitBytes(OP_SET_PROPERTY, name);
+    }
+    else {
+        emitBytes(OP_GET_PROPERTY, name);
+    }
+}
+
 
 uint8_t Compiler::argumentList() {
     uint8_t argCount = 0;

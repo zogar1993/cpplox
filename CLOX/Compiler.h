@@ -24,6 +24,7 @@ private:
 	void number(bool canAssign);
 	void literal(bool canAssign);
 	void string(bool canAssign);
+	void classDeclaration();
 	void unary(bool canAssign);
 	void binary(bool canAssign);
 	void grouping(bool canAssign);
@@ -62,6 +63,7 @@ private:
 	void or_(bool canAssign);
 	void function(FunctionType type);
 	void call(bool canAssign);
+	void dot(bool canAssign);
 	uint8_t argumentList();
 	void consume(TokenType type, const char* message);
 	void errorAtCurrent(const char* message);
@@ -86,7 +88,7 @@ private:
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_LEFT_BRACE
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_RIGHT_BRACE     
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_COMMA           
-	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_DOT             
+	  { NULL,     &Compiler::dot,     PREC_CALL },       // TOKEN_DOT         
 	  { &Compiler::unary,    &Compiler::binary, PREC_TERM },       // TOKEN_MINUS           
 	  { NULL,				 &Compiler::binary, PREC_TERM },       // TOKEN_PLUS            
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_SEMICOLON       

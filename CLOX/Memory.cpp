@@ -149,6 +149,7 @@ static void markRoots() {
 
     vm()->globals.mark();
     vm()->compiler.markRoots();
+    markObject((Obj*)vm()->initString);
 }
 
 static void traceReferences() {

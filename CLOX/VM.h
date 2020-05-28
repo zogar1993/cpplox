@@ -35,6 +35,8 @@ public:
 	void concatenate();
 	void defineMethod(ObjString* name);
 	bool callValue(Value callee, int argCount);
+	bool invokeFromClass(ObjClass* klass, ObjString* name, int argCount);
+	bool invoke(ObjString* name, int argCount);
 	void closeUpvalues(Value* last);
 	bool call(ObjClosure* closure, int argCount);
 	void defineNative(const char* name, NativeFn function);
@@ -51,6 +53,8 @@ public:
 
 	size_t bytesAllocated;
 	size_t nextGC;
+
+	ObjString* initString;
 
 	Value stack[STACK_MAX];
 	Value* stackTop;

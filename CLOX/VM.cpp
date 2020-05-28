@@ -195,6 +195,15 @@ InterpretResult VM::run() {
                 frame = &frames[frameCount - 1];
                 break;
             }
+            case OP_INVOKE: {
+                ObjString* method = READ_STRING();
+                int argCount = READ_BYTE();
+                if (!invoke(method, argCount)) {
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                frame = &frames[frameCount - 1];
+                break;
+            }
             case OP_CLOSURE: {
                 ObjFunction* function = AS_FUNCTION(READ_CONSTANT());
                 ObjClosure* closure = newClosure(function);
@@ -303,6 +312,9 @@ VM::VM() {
     grayCapacity = 0;
     grayStack = NULL;
 
+    vm()->initString = NULL;
+    vm()->initString = copyString("init", 4);
+
     defineNative("clock", clockNative);
 
 }
@@ -311,6 +323,7 @@ void VM::free()
 {
     strings.free();
     globals.free();
+    vm()->initString = NULL;
     freeObjects();
 }
 
@@ -383,6 +396,13 @@ bool VM::callValue(Value callee, int argCount) {
         case OBJ_CLASS: {
             ObjClass* klass = AS_CLASS(callee);
             stackTop[-argCount - 1] = OBJ_VAL(newInstance(klass));
+            Value initializer;
+            if (klass->methods.get(vm()->initString, &initializer)) {
+                return call(AS_CLOSURE(initializer), argCount);
+            } else if (argCount != 0) {
+                runtimeError("Expected 0 arguments but got %d.", argCount);
+                return false;
+            }
             return true;
         }
         case OBJ_CLOSURE:
@@ -402,6 +422,36 @@ bool VM::callValue(Value callee, int argCount) {
 
     runtimeError("Can only call functions and classes.");
     return false;
+}
+
+bool VM::invokeFromClass(ObjClass* klass, ObjString* name,
+    int argCount) {
+    Value method;
+    if (!klass->methods.get(name, &method)) {
+        runtimeError("Undefined property '%s'.", name->chars);
+        return false;
+    }
+
+    return call(AS_CLOSURE(method), argCount);
+}
+
+bool VM::invoke(ObjString* name, int argCount) {
+    Value receiver = peek(argCount);
+
+    if (!IS_INSTANCE(receiver)) {
+        runtimeError("Only instances have methods.");
+        return false;
+    }
+
+    ObjInstance* instance = AS_INSTANCE(receiver);
+
+    Value value;
+    if (instance->fields.get(name, &value)) {
+        stackTop[-argCount - 1] = value;
+        return callValue(value, argCount);
+    }
+
+    return invokeFromClass(instance->klass, name, argCount);
 }
 
 void VM::closeUpvalues(Value* last) {

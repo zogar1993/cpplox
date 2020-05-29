@@ -25,6 +25,8 @@ private:
 	void literal(bool canAssign);
 	void string(bool canAssign);
 	void method();
+	Token syntheticToken(const char* text);
+	void super_(bool canAssign);
 	void classDeclaration();
 	void unary(bool canAssign);
 	void binary(bool canAssign);
@@ -127,8 +129,8 @@ private:
 	  { NULL,				 &Compiler::or_,    PREC_OR },         // TOKEN_OR           
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_PRINT           
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_RETURN          
-	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_SUPER           
-	  { &Compiler::this_,    NULL,    PREC_NONE },       // TOKEN_THIS        
+	  { &Compiler::super_,   NULL,				PREC_NONE },	   // TOKEN_SUPER 
+	  { &Compiler::this_,    NULL,				PREC_NONE },       // TOKEN_THIS        
 	  { &Compiler::literal,  NULL,				PREC_NONE },       // TOKEN_TRUE            
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_VAR             
 	  { NULL,				 NULL,				PREC_NONE },       // TOKEN_WHILE

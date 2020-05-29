@@ -8,6 +8,7 @@
 #include <string.h>
 #pragma warning(disable:4996)
 
+#define NAN_BOXING 
 #define DEBUG_PRINT_CODE 
 #define DEBUG_TRACE_EXECUTION
 #define DEBUG_STRESS_GC

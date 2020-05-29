@@ -17,19 +17,19 @@ Table::Table()
 void Table::init()
 {
     count = 0;
-    capacity = 0;
+    capacity = -1;
     entries = NULL;
 }
 
 void Table::free() {
-    FREE_ARRAY(Entry, entries, capacity);
+    FREE_ARRAY(Entry, entries, capacity + 1);
     init();
 }
 
 bool Table::set(ObjString* key, Value value)
 {
-    if (count + 1 > capacity * TABLE_MAX_LOAD) {
-        int new_capacity = GROW_CAPACITY(capacity);
+    if (count + 1 > (capacity + 1) * TABLE_MAX_LOAD) {
+        int new_capacity = GROW_CAPACITY(capacity + 1) - 1;
         adjustCapacity(new_capacity);
     }
 
@@ -70,7 +70,7 @@ bool Table::remove(ObjString* key)
 }
 
 Entry* Table::findEntry(Entry* entries, int capacity, ObjString* key) {
-    uint32_t index = key->hash % capacity;
+    uint32_t index = key->hash & capacity;
     Entry* tombstone = NULL;
 
     for (;;) {
@@ -91,12 +91,12 @@ Entry* Table::findEntry(Entry* entries, int capacity, ObjString* key) {
             return entry;
         }
 
-        index = (index + 1) % capacity;
+        index = (index + 1) & capacity;
     }
 }
 
 void Table::mark() {
-    for (int i = 0; i < capacity; i++) {
+    for (int i = 0; i <= capacity; i++) {
         Entry* entry = &entries[i];
         markObject((Obj*)entry->key);
         markValue(entry->value);
@@ -104,7 +104,7 @@ void Table::mark() {
 }
 
 void Table::removeWhite() {
-    for (int i = 0; i < capacity; i++) {
+    for (int i = 0; i <= capacity; i++) {
         Entry* entry = &entries[i];
         if (entry->key != NULL && !entry->key->obj.isMarked) {
             remove(entry->key);
@@ -113,14 +113,14 @@ void Table::removeWhite() {
 }
 
 void Table::adjustCapacity(int capacity) {
-    Entry* entries = ALLOCATE(Entry, capacity);
-    for (int i = 0; i < capacity; i++) {
+    Entry* entries = ALLOCATE(Entry, capacity + 1);
+    for (int i = 0; i <= capacity; i++) { 
         entries[i].key = NULL;
         entries[i].value = NIL_VAL;
     }
 
     count = 0;
-    for (int i = 0; i < capacity; i++) {
+    for (int i = 0; i <= Table::capacity; i++) {
         Entry* entry = &entries[i];
         if (entry->key == NULL) continue;
 
@@ -130,13 +130,13 @@ void Table::adjustCapacity(int capacity) {
         count++;
     }
 
-    FREE_ARRAY(Entry, Table::entries, Table::capacity);
+    FREE_ARRAY(Entry, Table::entries, Table::capacity + 1);
     Table::entries = entries;
     Table::capacity = capacity;
 }
 
 void tableAddAll(Table* from, Table* to) {
-    for (int i = 0; i < from->capacity; i++) {
+    for (int i = 0; i <= from->capacity; i++) {
         Entry* entry = &from->entries[i];
         if (entry->key != NULL) {
             to->set(entry->key, entry->value);
@@ -147,7 +147,7 @@ void tableAddAll(Table* from, Table* to) {
 ObjString* Table::findString(const char* chars, int length, uint32_t hash) {
     if (count == 0) return NULL;
 
-    uint32_t index = hash % capacity;
+    uint32_t index = hash & capacity;
 
     for (;;) {
         Entry* entry = &entries[index];
@@ -155,8 +155,7 @@ ObjString* Table::findString(const char* chars, int length, uint32_t hash) {
         if (entry->key == NULL) {
             // Stop if we find an empty non-tombstone entry.                 
             if (IS_NIL(entry->value)) return NULL;
-        }
-        else if (
+        } else if (
             entry->key->length == length &&
             entry->key->hash == hash &&
             memcmp(entry->key->chars, chars, length) == 0
@@ -165,6 +164,6 @@ ObjString* Table::findString(const char* chars, int length, uint32_t hash) {
             return entry->key;
         }
 
-        index = (index + 1) % capacity;
+        index = (index + 1) & capacity;
     }
 }
